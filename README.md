@@ -11,5 +11,6 @@
 
 - For every password found, the script will print out the corresponding username and cleartext
 
-- In order to run open up linux terminal and run ./Script18 passwordfile.txt
-- There should also be a corresponding dictionary named 'words' in the same folder
+- In order to run open up linux terminal and run ./script18 passwordfile.txt
+- passwordfile.txt is your own password file and is not included
+- There should also be a corresponding dictionary named 'words' in the same folder (however this is also not included)
