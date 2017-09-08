@@ -1,0 +1,156 @@
+#!/bin/bash
+
+#variables
+array=()
+checksum_array=()
+try=""
+number=0
+filename="$1"
+lowercase_word=""
+character_count=""
+userpassword=""
+character_count=0
+
+#-------------------------------------------------------------------------------
+
+#functions
+readfile(){
+	readarray array < "$filename"
+
+	for userpassword in "${array[@]}"
+	do 
+		userpassword=$(tr -d ' ' <<< "$userpassword")
+		checksum_array+=("${userpassword##*:}")
+	done	
+}
+
+convert_to_checksum(){
+	try=$(echo -n "$1" | sha256sum | awk '{print $1}')
+}
+
+compare_password(){                                                                                        
+
+	number=0								 
+        for checksum_password in "${checksum_array[@]}"
+        do	
+		if [ "$1" == "$checksum_password" ] 
+                then
+			user=$(echo "${array[$number]}" | cut -d':' -f 1)
+			pword=$(echo -n "$2" | tr '[:upper:]' '[:lower:]')
+			echo "The password is $pword and the user is $user"
+        		unset "checksum_array[$number]"
+			unset "array[$number]"
+        		checksum_array=( "${checksum_array[@]}" )
+			array=( "${array[@]}" )							
+			if [ ${#array[@]} -eq 0 ];
+                	then
+				echo "All passwords found"
+				exit 1
+			fi
+                
+		fi
+        let number+=1                                                   
+        done                                                                              
+}
+
+#-------------------------------------------------------------------------------
+
+#password sets
+#approx. 25 common passwords
+declare -a common_passwords=('test' '123456' '123456789' 'qwerty' '12345678' '111111' '1234567890' '1234567' 'password' '123123' '987654321'
+    'qwertyuiop' 'mynoob' '123321' '666666' '18atcskd2w' '7777777' '1q2w3e4r' '654321' '555555' '3rjs1la7qe' 'google' '1q2w3e4r5t' '123qwe' 'zxcvbnm' '1q2w3e')						
+dict='./words'												
+declare -a characters=('a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n' 'o' 'p' 'q' 'r' 's' 't' 'u' 'v' 'w' 'x' 'y' 'z')	
+
+readfile
+
+#-------------------------------------------------------------------------------
+
+echo "Part 2a"
+for password in "${common_passwords[@]}";													 
+	do
+	convert_to_checksum "$password"
+	compare_password "$try" "$password"
+	done
+
+#-------------------------------------------------------------------------------
+
+echo "Part 2b"
+#start=`date +%s`				
+while read -r line
+	do
+	lowercase_word=$(echo -n "$line" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{print $1}')								
+	compare_password "$lowercase_word" "$line"
+	done < "${dict[@]}"
+
+#end=`date +%s`
+#runtime=$((end-start))
+#echo $runtime 
+
+#-------------------------------------------------------------------------------
+ 
+echo "Part 2c"
+character_count=1
+	
+while  [ $character_count -le 4 ]
+	do
+		if [ $character_count -eq 1 ]
+		then
+			for letter1 in "${characters[@]}";                                                         
+        		do
+			convert_to_checksum "$letter1"
+			compare_password "$try" "$letter1"
+			sleep 0.1						
+			done 
+		fi
+		if [ $character_count -eq 2 ]
+		then
+			for letter1 in "${characters[@]}";
+			do 
+				for letter2 in "${characters[@]}";
+				do
+				convert_to_checksum "$letter1$letter2"
+				compare_password "$try" "$letter1$letter2"
+				sleep 0.1
+				done
+			done
+		fi
+        	if [ $character_count -eq 3 ]
+                then
+ 
+                        for letter1 in "${characters[@]}";
+                        do
+                                for letter2 in "${characters[@]}";
+                                do					
+					for letter3 in "${characters[@]}";
+                                	do
+					convert_to_checksum "$letter1$letter2$letter3"
+					compare_password "$try" "$letter1$letter2$letter3"							
+					sleep 0.1
+					done
+                                done
+                        done
+         	 fi
+        	 if [ $character_count -eq 4 ]
+                 then
+ 			for letter1 in "${characters[@]}";
+                        do
+                                for letter2 in "${characters[@]}";
+                                do
+
+					for letter3 in "${characters[@]}";
+                                	do
+
+						for letter4 in "${characters[@]}";
+                                		do
+						convert_to_checksum "$letter1$letter2$letter3$letter4"
+						compare_password "$try" "$letter1$letter2$letter3$letter4"
+                                       		sleep 0.1
+						done
+                                	done
+                        	done
+			done
+                fi
+let character_count+=1
+done
+
